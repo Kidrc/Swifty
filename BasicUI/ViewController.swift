@@ -11,6 +11,7 @@ import UIKit
 class ViewController: UIViewController, UITextFieldDelegate {
     
     // MARK: Properties
+    
     @IBOutlet weak var nameText: UITextField!
     @IBOutlet weak var dataLabel: UILabel!
     
@@ -27,10 +28,29 @@ class ViewController: UIViewController, UITextFieldDelegate {
         // Dispose of any resources that can be recreated.
     }
 
-    // MARK: Actions
-    @IBAction func searchButton(sender: UIButton) {
-        dataLabel.text = "Hello World"
+    // MARK: UITextFieldDelegate
+    
+    func textFieldShouldReturn(textField: UITextField) -> Bool {
+        //Hide the keyboard.
+        nameText.resignFirstResponder()
+        return true
     }
+    
+    func textFieldDidEndEditing(textField: UITextField) {
+        lol_Search_By_Name()
+    }
+    
+    // MARK: Actions
+    
+    @IBAction func searchButton(sender: UIButton) {
+        lol_Search_By_Name()
+    }
+
+    func lol_Search_By_Name() {
+        dataLabel.text = nameText.text;
+    }
+
+
     
 }
 
