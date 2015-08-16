@@ -9,9 +9,11 @@
 import UIKit
 
 struct LSummonerObject {
-    var id:Int = 0
+    var id:String = ""
     var name:String = ""
-    var level:Int = 0
+    var level:String = ""
+    var rank:String = ""
+    var division:String = ""
 }
 
 class ViewController: UIViewController, UITextFieldDelegate {
@@ -44,7 +46,7 @@ class ViewController: UIViewController, UITextFieldDelegate {
     
     func textFieldDidEndEditing(textField: UITextField) {
         if let result = lol_Search_By_Name(nameText.text) {
-            dataLabel.text = result.name
+            dataLabel.text = result.rank + " " + result.division
         }
         else {
             dataLabel.text = "Summoner Not Found"
@@ -54,10 +56,8 @@ class ViewController: UIViewController, UITextFieldDelegate {
     // MARK: Actions
     
     @IBAction func searchButton(sender: UIButton) {
-        println(nameText.text)
-        
         if let result = lol_Search_By_Name(nameText.text) {
-            dataLabel.text = result.name
+            dataLabel.text = result.rank + " " + result.division
         }
         else {
             dataLabel.text = "Summoner Not Found"
@@ -78,22 +78,52 @@ func lol_Search_By_Name(name:String) -> LSummonerObject? {
     request.addValue("text/html", forHTTPHeaderField: "Content-Type")
     
     var completed = false
+    var receivedData:NSData = NSData()
     
-    let task = session.dataTaskWithRequest(request) {
+    var task = session.dataTaskWithRequest(request) {
         (data, response, error) -> Void in
         if error != nil {
         }
         else {
-            var dataString = NSString(data: data, encoding: NSUTF8StringEncoding)
-            receivedObject.name = String(dataString!)
+            receivedData = data
             completed = true
         }
     }
     task.resume()
     
-    while(!completed) {
-
+    while(!completed) {}
+    completed = false
+    
+    var json = NSJSONSerialization.JSONObjectWithData(receivedData, options: NSJSONReadingOptions.MutableContainers, error: nil) as? [String:AnyObject]
+    var standardName = name.stringByReplacingOccurrencesOfString(" ", withString: "").lowercaseString
+    receivedObject.name = json![standardName]!["name"] as! String
+    receivedObject.id = String(json![standardName]!["id"] as! Int)
+    
+    
+    urlString = "https://na.api.pvp.net/api/lol/na/v2.5/league/by-summoner/"+receivedObject.id+"/entry?api_key=f948774c-1584-4faa-bf93-03f0b344ef9a"
+    url = NSURL(string: urlString)!
+    request.URL = url
+    
+    task = session.dataTaskWithRequest(request) {
+        (data, response, error) -> Void in
+        if error != nil {
+            
+        }
+        else {
+            receivedData = data
+            completed = true
+        }
     }
+    task.resume()
+    
+    while(!completed){}
+    completed = false
+    
+    json = NSJSONSerialization.JSONObjectWithData(receivedData, options: NSJSONReadingOptions.MutableContainers, error: nil) as? [String:AnyObject]
+    
+    var id = receivedObject.id
+    receivedObject.rank = json![id]![0]!["tier"] as! String
+    receivedObject.division = json![id]![0]!["entries"]!![0]!["division"] as! String
     return receivedObject
 }
 
